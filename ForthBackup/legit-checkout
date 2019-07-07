@@ -1,0 +1,81 @@
+#!/usr/bin/perl -w
+
+$size = @ARGV;
+if ($size != 1){
+	print "usage: legit-checkout [branchname]\n";	
+}
+
+$branchname = shift @ARGV;
+$branch_folder = ".".$branchname;
+$branch_folder_after = $branch_folder."*";
+if ( -e $branch_folder){ #branch exist, and this branch is not a current branch
+	@current_branch =glob(".*");
+	@current_branch = grep(/[\*]$/,@current_branch);
+	my $size = @current_branch;
+	check_index(@current_branch,$size);
+	
+#	if ($size == 1){ #there is a branch with *, change name
+#		rename $branch_folder, $branch_folder_after; 
+#		my $pre_branch_name = $current_branch[0];
+#		$name = $pre_branch_name;
+#		$pre_branch_name =~ s/\*//g;
+#		rename $name, $pre_branch_name;
+#	}
+#	elsif ($size == 0 && -e ".legit" ){
+#		rename $branch_folder, $branch_folder_after; 	
+#	}else{
+#		print "Repository not initialized yet";
+#	}
+	
+		
+} elsif ( -e $branch_folder_after ) {
+	print "Don't need to check out! Current branch is $branchname\n";
+}else {
+	print "Branch $branchname not exist!\n";
+}
+
+sub check_index{
+	my @cu = @_;
+	my $size = pop @_;
+	print "will read dir ".$cu[0]."\n";	
+	if ( $size == 1 ){
+		my $repo_dir = $cu[0]."/";
+		my $index_dir = $repo_dir."index/";
+
+		opendir DH, $repo_dir or die "can not open directory $repo_dir";
+		#opendir DJ, $index_dir or die "can not open directory $index_dir";
+		#my @legit_files = readdir DH;
+		foreach $file (readdir DH){
+			if ($file =~ /^[^\.]/ && $file ne "index" && $file ne ".log" && $file ne ".history"){
+					if ( -e "$index_dir$file" ) {
+						open IN, "<$index_dir$file" or die "cannot open index file $index_dir$file\n";
+						open RE, "<$repo_dir$file" or die "cannoe open repo file $index_dir$file\n";
+						@index_file_content = <IN>;
+						@repo_file_content = <RE>;
+						if ($#index_file_content != $#repo_file_content ){
+							print "Changes have not commit yet!\n";
+							exit 1;
+						}
+						else{
+							
+							for ($count=0; $count <=$#index_file_content; $count++){
+								if ($index_file_content[$count] eq $repo_file_content[$count]){
+									if ($count==0){
+										print "$index_dir$file and $repo_dir$file are the same\n";
+									}
+									continue;
+								}else{
+									print "Changes have not commit yet!\n";
+									exit 1;
+								}
+							}
+						}
+					}
+					else {
+						print "Changes have not commit yet!\n";
+						exit 1;
+					}
+			}
+		}
+	}
+}

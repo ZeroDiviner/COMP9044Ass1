@@ -1,0 +1,35 @@
+#!/usr/bin/env dash
+
+commit=`echo "$@"|cut -d: -f1`
+name=`echo "$@"|cut -d: -f2`
+log_num=`cat .legit/log|tail -1|cut -d' ' -f1`
+
+#get filename and commit number and log number
+
+
+if [ "$commit"x != ""x ] #check if commit number is ''
+then	
+	
+	if [ "$commit" -gt "$log_num"  ] #when commit number greater that the log_num in log file
+	then
+		echo "legit-show: error: unknown commit '$commit'"
+		exit 1
+	fi
+
+	filename="$name*$commit"
+	if [ ! -e .legit/.history/"$filename" ] #when file is not found in .history directory(for certain commit)
+	then
+		echo "legit-show: error: '$name' not found in commit $commit"
+		exit 1
+	else
+		cat .legit/.history/"$filename"
+	fi
+else
+	if [ ! -e .legit/index/"$name" ] #when file in current directory not exist
+	then
+		echo "legit-show: error: '$name' not found in index"
+		exit 1
+	else
+		cat .legit/index/"$name"
+	fi
+fi

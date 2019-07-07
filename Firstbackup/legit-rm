@@ -1,0 +1,132 @@
+#!/usr/bin/env dash
+
+
+force_mode=0
+cache_mode=0
+
+# use 3 variables to record 3 arguments
+
+for arg in $@
+do
+	if [ "$arg"x = '--force'x ]
+	then
+		force_mode=1
+	elif [ "$arg"x = '--cache'x ]
+	then
+		cache_mode=1
+	else	
+		filename="$arg"
+	fi
+
+#when in force_mode don't check if there are changes that not committed.
+
+        if [ "$force_mode" = 1 ]
+        then
+        
+        	#when cache_mode is on, delete only the file in the index
+        
+        	if [ "$cache_mode" = 1 ]
+        	then
+        
+        	#check if the file is exist in the index directory, otherwise report the error
+        
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        			rm .legit/index/"$filename"
+        			#echo "will remove .legit/index/$filename"
+        		else
+        			echo 'file not exist in index'
+        		fi	
+        
+        	#check if the file is exist in both current directory and the index directory, otherwise report the error
+        
+        	else
+        		
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        			rm .legit/index/"$filename"
+        			#echo "will remove .legit/index/$filename"
+        		else
+        			echo 'file not exist in index'
+        		fi
+        
+        		if [ -e "$filename" ]
+        		then 
+        			rm "$filename"
+        			#echo "will remove $filename from the current directory"	
+        		else
+        			echo 'file not exist in the current directory'
+        		fi
+        	fi
+        
+        ## when not in force_mode, must check if there are changes that not committed.
+        else	
+        	if [ "$cache_mode" = 1 ]
+        	then
+        		#check if the file is in the index, otherwise report the error
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        
+        			if [ -e .legit/"$filename" ] #check if the file is in the repository, otherwise there are changes that not commited
+        			then
+        				dif=`diff .legit/"$filename"  .legit/index/"$filename"`
+        				
+        				if [ "$dif"x = ""x ] #both 2 files exist, check if there are changes that not committed.
+        				then
+        					rm .legit/index/"$filename"
+        					#echo "will remove from .legit/index/$filename"
+        				else
+        					echo 'changes not committed since last commit 01'
+        				fi
+        			else
+        				echo 'changes not committed since last commit 02'
+        			fi
+        				
+        		else #report the error for no file exist in the index directory
+        			echo 'file not exist in index'
+        		fi	
+        
+        	else #cache_mode is 0,delete both files in the current directory and index directory
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        			if [ -e .legit/"$filename" ]
+        			then
+        				dif=`diff .legit/"$filename" .legit/index/"$filename"`
+        
+        				if [ "$dif"x = ""x ]
+        				then
+        					rm .legit/index/"$filename"
+        					#echo "will remove from $filename 11"
+        				else		
+        					echo 'changes not committed since last commit 03'
+        				fi
+        			else
+        				echo 'changes not committed since last commit 04'
+        			fi
+        		else
+        			echo 'file not exist in index'
+        		fi
+        
+        					
+        		if [ -e "$filename" ] #check is the file is in the current directory or not
+        		then
+        			if [ -e .legit/"$filename" ] #check if the file is in the repository or not
+        			then
+        				dif=`diff .legit/"$filename" "$filename"`
+        			
+        				if [ "$dif"x = ""x ] #check if modified since last commit
+        				then
+        					rm "$filename"
+        					#echo "will remove $filename from current directory"
+        				else
+        					echo 'changes not committed since last commit 05'
+        				fi
+        			else
+        				echo 'changes not committed since last commit 06' #file not exist in repository, new file!
+        			fi
+        		else
+        			echo 'file not exist in current directory' #file not exist in the current directory, report error
+        		fi
+        	fi		
+        fi
+done	

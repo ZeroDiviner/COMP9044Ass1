@@ -1,0 +1,92 @@
+#!/usr/bin/env dash
+
+#check the number of arguments, 3 means -a included, 2 means only -m
+if [ "$#" -eq  "3" ]
+then
+	comment=$3
+	add_flag=1
+else	
+	comment=$2
+	add_flag=0
+fi
+
+#when -a is in the arguments, update the all of the file in the index based on files in the current directory
+if [ "$add_flag" -eq "1" ]
+then
+	for file in .legit/index/*
+	do		
+		name=`echo ${file##*/}`
+		if [ -e "$name" ]
+		then
+			legit-add "$name"
+		fi
+	done
+fi
+
+##change directory to .legit
+cd .legit
+
+##check if the file is empty(start with 0 or not)
+if [ -e ".log" -a ! -s ".log" ]
+then
+	log_num=0
+else
+	log_num=$((`tail -1 .log|cut -d' ' -f1`+1))
+##	echo "log number is $log_num"		
+fi
+
+
+
+
+##deal with all the files in this directory,check if any file changed.
+flag=0
+if [ ! "`ls index`"x = ""x ]
+then
+    for file in index/*
+    do	
+    
+    	name=`echo ${file##*/}`
+    	if [ ! -e "$name" ]
+    	then
+    		flag=1
+    	else	
+    		dif=`diff "$file" "$name"`
+    		if [ ! "$dif"x = ""x ]
+    		then
+    			flag=1
+    		fi
+    	fi
+    
+    	if [ -e "$name"  ]
+    	then		
+    		cp "$file" .history/"$name*$log_num"
+    		cp "$file" "./$name"
+    		
+    	else
+    		#cat "$file"|while read line; do echo "$log_num $comment|$line|$name" >>log; done
+    		cp "$file" .history/"$name*$log_num"
+    		cp "$file" "./$name"
+    	fi	
+    done
+fi
+
+for file in *
+do
+	if [ -e "index/$file" ]
+	then
+		continue
+	else
+		if [ ! -d $file ]
+		then
+			rm "$file"
+			flag=1
+		fi
+	fi
+done
+if [ "$flag" -eq 1 ]
+then
+	echo "$log_num $comment" >> .log
+	echo "Committed as commit $log_num"
+else
+	echo "nothing to commit"
+fi	

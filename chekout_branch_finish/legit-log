@@ -1,0 +1,5 @@
+#!/usr/bin/env dash
+
+cat ./.legit/.log|sort -r
+
+#this file print the log file in descending order

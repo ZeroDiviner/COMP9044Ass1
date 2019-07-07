@@ -1,0 +1,125 @@
+#!/usr/bin/perl
+
+$delete_mode=0;
+$branchname="";
+
+use File::Basename;
+use File::Path qw(make_path remove_tree);
+use File::Copy;
+
+foreach $arg (@ARGV){
+	if ($arg eq "-d"){
+		#print "delete mode\n";
+		$delete_mode=1;
+	}
+	else{
+		$branchname=$arg;
+		#print "branchname is $branchname\n";
+	}
+}
+
+$dir = ".".$branchname;
+$dir_cu =  $dir."*";
+
+@repos = glob ('.*');
+
+sub recursive_copy {
+    my ($source, $destination,$start,$end) = @_;
+	print "source here is $source";
+    for my $path (glob $source) {
+		print "path here is $patn\n";
+		if (-d $path) {
+			$newfolder = $path;
+			$newfolder =~ s/$start/$end/g;
+			$newfolder =~ s/\*//g;
+            make_path($newfolder);
+			print "$path/.*\n";
+            recursive_copy($path."/*", $newfolder,$start,$end);
+        }
+        else {
+            copy($path, $destination);
+        }
+    }
+}
+
+if ($delete_mode == 1 && $branchname ne ""){ #delete corresponding branch
+	#print "delete mode!\n";
+	#	print "$dir_cu";
+    if ( -e $dir ){
+			use File::Path;
+			rmtree $dir;
+			
+    }
+    elsif ( -e $dir_cu ){
+		print "This is current branch!\n";
+    }else{
+		print "This branch not exist!\n";
+	}
+	
+} elsif ($dele_mode == 0 && $branchname ne ""){ # create a new branch
+	#print "create mode!\n";
+	if ( -e $dir || -e $dir_cu) {
+		print "Branch $branchname already exist!\n";
+	}else {
+		my @file = grep(/^[\.].*?[\*]$/,@repos);
+		my $size = @file;
+		if ($size == 1){
+			$cu_dir = $file[0];
+		}
+		else{
+			if ( -e ".legit" )
+			{
+				$cu_dir = ".legit";
+			}else{
+				print "Master branch not exist!";
+				exit 1;
+			}
+		}
+		print "current branch is $cu_dir\n";
+		print "dir is $dir\n";
+		mkdir $dir,0755;
+		recursive_copy("$cu_dir/* $cu_dir/.*",$dir,$cu_dir,$dir);
+	
+	}
+	
+} else { #show the current branch name
+	#print "show mode!\n";
+	@file = grep(/^[\.].*?[\*]$/,@repos);
+		
+	if (@file=grep (/^[\.].*?[\*]$/,@repos)){
+		$file=@file[0];
+		$file =~ s/(^\.)//g;
+		$file =~ s/(\*$)//g;
+		print "Current branch name is $file\n"; 
+	}elsif ( -e ".legit" ){
+		print "Current branch name is master\n";
+	}else{
+		print "Master branch not exist!";
+	}
+
+}
+
+
+
+
+
+#if ( -e $dir ){
+#	opendir DH, $dir or die " Cannot open $dir: $!";
+#	foreach $file (readdir DH) 
+#		if ($file ne "." && $file ne ".."){
+#			print " $file\n" ;
+#		}
+#	}
+#}
+#elsif ( -e $dir_cu) {
+#	opendir DH, $dir_cu or die " Cannot open $dir_cu: $!";
+#	foreach $file (readdir DH) {
+#		if ($file ne "." && $file ne ".."){
+#			print " $file\n" ;
+#		}
+#	}
+#}
+
+
+
+

@@ -1,0 +1,225 @@
+#!/usr/bin/env dash
+
+
+force_mode=0
+cache_mode=0
+
+# use 3 variables to record 3 arguments
+
+for arg in $@
+do
+	if [ "$arg"x = '--force'x ]
+	then
+		force_mode=1
+		continue
+	elif [ "$arg"x = '--cached'x ]
+	then
+		cache_mode=1
+		continue
+	else	
+		filename="$arg"
+	fi
+	#echo "filename is  $filename"
+#when in force_mode don't check if there are changes that not committed.
+
+        if [ "$force_mode" = 1 ]
+        then
+        
+        	#when cache_mode is on, delete only the file in the index
+        
+        	if [ "$cache_mode" = 1 ]
+        	then
+        
+        	#check if the file is exist in the index directory, otherwise report the error
+        
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        			rm .legit/index/"$filename"
+        			#echo "will remove .legit/index/$filename"
+        		else
+				echo "legit-rm: error: '$filename' is not in the legit repository"	
+        		fi	
+        
+        	#check if the file is exist in both current directory and the index directory, otherwise report the error
+        
+        	else
+        		
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        			rm .legit/index/"$filename"
+        			#echo "will remove .legit/index/$filename"
+        		else
+        			echo "legit-rm: error: '$filename' is not in the legit repository"
+				exit 1
+        		fi
+        
+        		if [ -e "$filename" ]
+        		then 
+        			rm "$filename"
+        			#echo "will remove $filename from the current directory"	
+        		#else
+        		#	echo 'file not exist in the current directory'
+        		fi
+        	fi
+        
+        ## when not in force_mode, must check if there are changes that not committed.
+        else	
+        	if [ "$cache_mode" = 1 ]
+        	then
+        		#check if the file is in the index, otherwise report the error
+        		if [ -e .legit/index/"$filename" ]
+        		then
+        
+        			if [ -e .legit/"$filename" ] #check if the file is in the repository, otherwise there are changes that not commited
+        			then
+        				if [ -e "$filename" ]
+					then	
+						dif_in_cu=`diff $filename .legit/index/$filename`
+						dif_in_re=`diff .legit/$filename .legit/index/$filename`
+						dif_cu_re=`diff $filename .legit/$filename`
+						
+						if [ ! "$dif_in_cu" = "" -a ! "$dif_in_re" = "" ] #file in index are different from file in index and repository
+						then
+						  	echo "legit-rm: error: '$filename' in index is different to both working file and repository"
+							exit 1
+						fi
+						
+						#if [ ! "$dif_cu_re" = "" -a "$dif_in_re" = "" ]
+						#then
+						#	echo "legit-rm: error: '$filename' in repository is different to working file"
+						#	exit 1
+						#fi
+				
+						if [ ! "$dif_in_re" = "" -a ! "$dif_in_cu" = "" ]
+						then
+							echo "legit-rm: error: '$filename' has changes staged in the index"
+							exit 1
+						fi
+						rm .legit/index/$filename
+					#else
+					
+					fi
+        			else
+					dif_cu_in=`diff $filename .legit/index/$filename`
+					if [ "$dif_cu_in" = "" ]
+					then
+						rm .legit/index/$filename
+					else
+						echo "legit-rm: error: '$filename' has changes staged in the index"
+					fi
+        			fi
+        				
+        		else #report the error for no file exist in the index directory
+        			echo "legit-rm: error: '$filename' is not in the legit repository"
+        		fi	
+        
+        	else #cache_mode is 0,delete both files in the current directory and index directory (forced mode is off,  warning before rm)
+			if [ -e .legit/"$filename" ] # there is a previous submit
+			then
+				if [ -e .legit/index/"$filename" ] #file in both index and repo
+				then
+					if [ -e "$filename" ] #file in index,repo and current directory 
+					then
+						dif_in_cu=`diff $filename .legit/index/$filename`
+						dif_in_re=`diff .legit/$filename .legit/index/$filename`
+						dif_cu_re=`diff $filename .legit/$filename`
+
+						if [ ! "$dif_in_cu" = "" -a ! "$dif_in_re" = "" ] #file in index are different from file in index and repository
+						then
+						  	echo "legit-rm: error: '$filename' in index is different to both working file and repository"
+							exit 1
+						fi
+						
+						if [ ! "$dif_cu_re" = "" -a "$dif_in_re" = "" ]
+						then
+							echo "legit-rm: error: '$filename' in repository is different to working file"
+							exit 1
+						fi
+				
+						if [ ! "$dif_in_re" = "" -a "$dif_in_cu" = "" ]
+						then
+							echo "legit-rm: error: '$filename' has changes staged in the index"
+							exit 1
+						fi
+						rm $filename
+						rm .legit/index/$filename					
+				#	else # file in index,repo but not in current directory
+					
+					fi
+			#	else #file in repo but not in index
+					
+				fi
+			else # there is not previous submit
+				if [ -e .legit/index/$filename ]
+				then
+					echo "legit-rm: error: '$filename' has changes staged in the index"
+				else
+					echo "legit-rm: error: '$filename' is not in the legit repository"
+					exit 1
+				fi
+			fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#        		if [ -e .legit/index/"$filename" ]
+#        		then
+#        			if [ -e .legit/"$filename" ]
+#        			then
+#        				dif=`diff .legit/"$filename" .legit/index/"$filename"`
+#        
+#        				if [ "$dif"x = ""x ]
+#        				then
+#        					rm .legit/index/"$filename"
+#        					#echo "will remove from $filename 11"
+#        				else		
+#        					echo "legit-rm: error: '$filename' has changes staged in the index"
+#						exit 1
+#        				fi
+#        			else
+#        				echo "legit-rm: error: '$filename' is not in the legit repository"
+#					exit 1
+#        			fi
+#        		#else
+#        		#	echo 'file not exist in index'
+#        		fi
+#        
+#        					
+#        		if [ -e "$filename" ] #check is the file is in the current directory or not
+#        		then
+#        			if [ -e .legit/"$filename" ] #check if the file is in the repository or not
+#        			then
+#        				dif=`diff .legit/"$filename" "$filename"`
+#        			
+#        				if [ "$dif"x = ""x ] #check if modified since last commit
+#        				then
+#        					rm "$filename"
+#        					#echo "will remove $filename from current directory"
+#        				else
+#        					echo 'changes not committed since last commit 05'
+#						exit 1
+#        				fi
+#        			else
+#        				echo "legit-rm: error: '$filename' is not in the legit repository" #file not exist in repository, new file!
+#					exit 1
+#        			fi
+#        		#else
+#        		#	echo 'file not exist in current directory' #file not exist in the current directory, report error
+#        		fi
+        	fi		
+        fi
+done	
