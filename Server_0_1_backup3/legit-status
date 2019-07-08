@@ -1,0 +1,94 @@
+#!/usr/bin/env dash
+
+if [ -e ".legit" ]
+then
+        flag=`ls ".legit/.branches"|grep "\*$"`
+        if [ -d ".legit/.branches" -a ! "$flag" = ""  ]
+        then
+                for file in ".legit/.branches"/*
+                do  
+                        temp=`echo $file|grep '[\*]$'`
+                        if [ ! "$temp" = "" ]
+                        then
+                                repo_dir=$temp
+                        fi  
+                done
+        else
+                repo_dir=".legit"
+        fi  
+else
+        echo "legit-add: error: no .legit directory containing legit repository exists"
+        exit 1
+fi
+
+
+
+
+
+(ls -l && ls -l '.legit' && ls -l '.legit/index')|sort -k9|egrep '^-'|egrep -v log| while read line; do 
+
+name=${line##* }
+indexfile=$repo_dir/index/"$name"
+repofile=$repo_dir/"$name"
+
+#use a variable lastfilename to check that for the same file name, code below will only execute once
+if [ ! "$name" = "$lastfilename" ]
+then
+	#echo "$name"
+	#file exist in the current directory
+	if [ -e "$name" ]
+	then 
+		if [ -e "$indexfile" ] #file exist in the current directory and index directory
+		then
+			
+			if [ -e "$repofile" ] #file exist in all directory
+			then
+				dif_in_cu=`diff "$name" "$indexfile"`
+				if [ "$dif_in_cu"  ]  #file in current and index are different
+				then
+					dif_in_re=`diff "$indexfile" "$repofile"`
+					if [ "$dif_in_re" ] # file in index and repository are different ------>different stages
+					then
+						echo "$name - file changed, different changes staged for commit"
+					else #file in index and repository are the same ----->changes not staged
+						echo "$name - file changed, changes not staged for commit"
+					fi
+				else 	# file in current and index are the same
+					difs_in_re=`diff "$indexfile" "$repofile"` 
+					if [ "$difs_in_re" ] #------>changes staged
+					then
+						echo "$name - file changed, changes staged for commit"	
+					else #file exists in all directories and all the same ----->same as repo
+						echo "$name - same as repo"
+					fi
+				fi
+					
+			else #file exist in index and current, not in repository ------>added to index
+				echo "$name - added to index"
+			fi
+		else #file exist in the current directory but not in the index directory
+			if [ ! -e "$indexfile" ] #file in current directory, not in index and repository ----->untracked
+			then
+				echo "$name - untracked"
+			fi	
+		fi
+	else #file not exist in the current directory 
+		if [ -e "$indexfile" ] #file exist in index but not in current directory
+		then
+			if [ -e "$repofile" ] #file exist in index, repository but not in current --->deleted
+			then
+				echo "$name - file deleted"	
+			fi
+		else #file not exist in index and current directory
+			if [ -e "$repofile" ] #file exist in repo but not in current,index --->file deleted
+			then
+				echo "$name - deleted"
+			fi
+		fi	
+	fi
+
+
+fi
+lastfilename=$name
+
+done
