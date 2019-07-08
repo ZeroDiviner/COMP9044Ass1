@@ -1,5 +1,18 @@
 #!/usr/bin/env dash
+for file in .*
+do
+    temp=`echo "$file"|grep '^\..*[\*]$'`
+    if [ ! "$temp" = "" ]
+    then
+        repo_dir=$temp
+    fi  
+done
 
-cat ./.legit/.log|sort -r
+if [  "$repo_dir" = ""  ]
+then
+    repo_dir=".legit"
+fi
+
+cat ./$repo_dir/.log|sort -r
 
 #this file print the log file in descending order

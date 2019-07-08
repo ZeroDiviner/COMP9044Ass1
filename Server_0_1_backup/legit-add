@@ -1,18 +1,5 @@
 #!/usr/bin/env dash
 
-for file in .*
-do
-	temp=`echo "$file"|grep '^\..*[\*]$'`
-	if [ ! "$temp" = "" ]
-	then
-		repo_dir=$temp
-	fi	
-done
-
-if [  "$repo_dir" = ""  ]
-then
-	repo_dir=".legit"
-fi
 for file in $@
 do
 #this mainly for detect if there is illegal word in filename		
@@ -33,17 +20,17 @@ do
 	fi
 
 #check if index directory already exist, if so, copy the file to the index directory
-	if [ -d $repo_dir/index ]
+	if [ -d .legit/index ]
 	then	
 
 #check if this file exist in current directory
 		if [ -e "$file" ]
 		then
-			cp -f "$file"   $repo_dir/index/"$file"
+			cp -f "$file"   .legit/index/"$file"
 		else
-			if [ -e $repo_dir/index/$file ]
+			if [ -e .legit/index/$file ]
 			then
-				rm $repo_dir/index/$file
+				rm .legit/index/$file
 			else
 				echo "legit-add: error: can not open '$file'"
 				exit 1
@@ -52,6 +39,5 @@ do
 	else
 		echo "legit-add: error: no .legit directory containing legit repository exists"
 		exit 1
-	
-fi
+	fi
 done

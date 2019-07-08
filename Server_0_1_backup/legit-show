@@ -1,25 +1,8 @@
 #!/usr/bin/env dash
 
-
-for file in .*
-do
-    temp=`echo "$file"|grep '^\..*[\*]$'`
-    if [ ! "$temp" = "" ]
-    then
-        repo_dir=$temp
-    fi  
-done
-
-if [  "$repo_dir" = ""  ]
-then
-    repo_dir=".legit"
-fi
-
-
-
 commit=`echo "$@"|cut -d: -f1`
 name=`echo "$@"|cut -d: -f2`
-log_num=`cat $repo_dir/.log|tail -1|cut -d' ' -f1`
+log_num=`cat .legit/.log|tail -1|cut -d' ' -f1`
 
 #get filename and commit number and log number
 
@@ -34,19 +17,19 @@ then
 	fi
 
 	filename="$name*$commit"
-	if [ ! -e $repo_dir/.history/"$filename" ] #when file is not found in .history directory(for certain commit)
+	if [ ! -e .legit/.history/"$filename" ] #when file is not found in .history directory(for certain commit)
 	then
 		echo "legit-show: error: '$name' not found in commit $commit"
 		exit 1
 	else
-		cat $repo_dir/.history/"$filename"
+		cat .legit/.history/"$filename"
 	fi
 else
-	if [ ! -e $repo_dir/index/"$name" ] #when file in current directory not exist
+	if [ ! -e .legit/index/"$name" ] #when file in current directory not exist
 	then
 		echo "legit-show: error: '$name' not found in index"
 		exit 1
 	else
-		cat $repo_dir/index/"$name"
+		cat .legit/index/"$name"
 	fi
 fi

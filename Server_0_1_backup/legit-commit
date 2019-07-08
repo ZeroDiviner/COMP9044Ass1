@@ -1,20 +1,5 @@
 #!/usr/bin/env dash
 
-for file in .*
-do
-    temp=`echo "$file"|grep '^\..*[\*]$'`
-    if [ ! "$temp" = "" ]
-    then
-        repo_dir=$temp
-    fi  
-done
-
-if [  "$repo_dir" = ""  ]
-then
-    repo_dir=".legit"
-fi
-
-
 #check the number of arguments, 3 means -a included, 2 means only -m
 if [ "$#" -eq  "3" ]
 then
@@ -28,7 +13,7 @@ fi
 #when -a is in the arguments, update the all of the file in the index based on files in the current directory
 if [ "$add_flag" -eq "1" ]
 then
-	for file in $repo_dir/index/*
+	for file in .legit/index/*
 	do		
 		name=`echo ${file##*/}`
 		if [ -e "$name" ]
@@ -39,7 +24,7 @@ then
 fi
 
 ##change directory to .legit
-cd $repo_dir
+cd .legit
 
 ##check if the file is empty(start with 0 or not)
 if [ -e ".log" -a ! -s ".log" ]

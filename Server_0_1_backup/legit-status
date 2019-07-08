@@ -1,25 +1,12 @@
 #!/usr/bin/env dash
 
-for file in .*
-do
-    temp=`echo "$file"|grep '^\..*[\*]$'`
-    if [ ! "$temp" = "" ]
-    then
-        repo_dir=$temp
-    fi  
-done
-
-if [  "$repo_dir" = ""  ]
-then
-    repo_dir=".legit"
-fi
 
 
 (ls -l && ls -l '.legit' && ls -l '.legit/index')|sort -k9|egrep '^-'|egrep -v log| while read line; do 
 
 name=${line##* }
-indexfile=$repo_dir/index/"$name"
-repofile=$repo_dir/"$name"
+indexfile=.legit/index/"$name"
+repofile=.legit/"$name"
 
 #use a variable lastfilename to check that for the same file name, code below will only execute once
 if [ ! "$name" = "$lastfilename" ]

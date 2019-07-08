@@ -103,9 +103,15 @@ if ($delete_mode == 1 && $branchname ne ""){ #delete corresponding branch
 		if ($file ne "legit"){
 			print "Current branch name is $file\n";
 		}else{
+
 			print "Current branch name is master!\n";	
 		}
 	}elsif ( -e ".legit" ){
+		$mas = $file[0];
+		opendir DH, $mas or die "can not open directory $mas";
+		foreach $f (readdir DH) {
+			print $f;
+		}	
 		print "Current branch name is master\n";
 	}else{
 		print "Master branch not exist!";

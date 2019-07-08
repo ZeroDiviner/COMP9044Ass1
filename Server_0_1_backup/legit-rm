@@ -1,18 +1,5 @@
 #!/usr/bin/env dash
 
-for file in .*
-do
-    temp=`echo "$file"|grep '^\..*[\*]$'`
-    if [ ! "$temp" = "" ]
-    then
-        repo_dir=$temp
-    fi  
-done
-
-if [  "$repo_dir" = ""  ]
-then
-    repo_dir=".legit"
-fi
 
 force_mode=0
 cache_mode=0
@@ -45,9 +32,9 @@ do
         
         	#check if the file is exist in the index directory, otherwise report the error
         
-        		if [ -e $repo_dir/index/"$filename" ]
+        		if [ -e .legit/index/"$filename" ]
         		then
-        			rm $repo_dir/index/"$filename"
+        			rm .legit/index/"$filename"
         			#echo "will remove .legit/index/$filename"
         		else
 				echo "legit-rm: error: '$filename' is not in the legit repository"	
@@ -57,9 +44,9 @@ do
         
         	else
         		
-        		if [ -e $repo_dir/index/"$filename" ]
+        		if [ -e .legit/index/"$filename" ]
         		then
-        			rm $repo_dir/index/"$filename"
+        			rm .legit/index/"$filename"
         			#echo "will remove .legit/index/$filename"
         		else
         			echo "legit-rm: error: '$filename' is not in the legit repository"
@@ -80,16 +67,16 @@ do
         	if [ "$cache_mode" = 1 ]
         	then
         		#check if the file is in the index, otherwise report the error
-        		if [ -e $repo_dir/index/"$filename" ]
+        		if [ -e .legit/index/"$filename" ]
         		then
         
-        			if [ -e $repo_dir/"$filename" ] #check if the file is in the repository, otherwise there are changes that not commited
+        			if [ -e .legit/"$filename" ] #check if the file is in the repository, otherwise there are changes that not commited
         			then
         				if [ -e "$filename" ]
 					then	
-						dif_in_cu=`diff $filename $repo_dir/index/$filename`
-						dif_in_re=`diff $repo_dir/$filename $repo_dir/index/$filename`
-						dif_cu_re=`diff $filename $repo_dir/$filename`
+						dif_in_cu=`diff $filename .legit/index/$filename`
+						dif_in_re=`diff .legit/$filename .legit/index/$filename`
+						dif_cu_re=`diff $filename .legit/$filename`
 						
 						if [ ! "$dif_in_cu" = "" -a ! "$dif_in_re" = "" ] #file in index are different from file in index and repository
 						then
@@ -108,15 +95,15 @@ do
 							echo "legit-rm: error: '$filename' has changes staged in the index"
 							exit 1
 						fi
-						rm $repo_dir/index/$filename
+						rm .legit/index/$filename
 					#else
 					
 					fi
         			else
-					dif_cu_in=`diff $filename $repo_dir/index/$filename`
+					dif_cu_in=`diff $filename .legit/index/$filename`
 					if [ "$dif_cu_in" = "" ]
 					then
-						rm $repo_dir/index/$filename
+						rm .legit/index/$filename
 					else
 						echo "legit-rm: error: '$filename' has changes staged in the index"
 					fi
@@ -127,15 +114,15 @@ do
         		fi	
         
         	else #cache_mode is 0,delete both files in the current directory and index directory (forced mode is off,  warning before rm)
-			if [ -e $repo_dir/"$filename" ] # there is a previous submit
+			if [ -e .legit/"$filename" ] # there is a previous submit
 			then
-				if [ -e $repo_dir/index/"$filename" ] #file in both index and repo
+				if [ -e .legit/index/"$filename" ] #file in both index and repo
 				then
 					if [ -e "$filename" ] #file in index,repo and current directory 
 					then
-						dif_in_cu=`diff $filename $repo_dir/index/$filename`
-						dif_in_re=`diff $repo_dir/$filename $repo_dir/index/$filename`
-						dif_cu_re=`diff $filename $repo_dir/$filename`
+						dif_in_cu=`diff $filename .legit/index/$filename`
+						dif_in_re=`diff .legit/$filename .legit/index/$filename`
+						dif_cu_re=`diff $filename .legit/$filename`
 
 						if [ ! "$dif_in_cu" = "" -a ! "$dif_in_re" = "" ] #file in index are different from file in index and repository
 						then
@@ -155,7 +142,7 @@ do
 							exit 1
 						fi
 						rm $filename
-						rm $repo_dir/index/$filename					
+						rm .legit/index/$filename					
 				#	else # file in index,repo but not in current directory
 					
 					fi
@@ -163,7 +150,7 @@ do
 					
 				fi
 			else # there is not previous submit
-				if [ -e $repo_dir/index/$filename ]
+				if [ -e .legit/index/$filename ]
 				then
 					echo "legit-rm: error: '$filename' has changes staged in the index"
 				else
