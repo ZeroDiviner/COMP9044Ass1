@@ -1,0 +1,177 @@
+#!/usr/bin/perl -w
+
+$size = @ARGV;
+if ($size != 1){
+	print "usage: legit-checkout [branchname]\n";	
+}
+
+$branchname = shift @ARGV;
+
+if ( -e ".legit/.branches/$branchname") {
+	$nameafter = $branchname."*";
+	@current_branch =glob(".legit/.branches/*");
+	@current_branch = grep(/[\*]$/,@current_branch);
+	my $size = @current_branch;
+	#print "@current_branch";
+	if ( $size == 0 ){
+		#check_index("master");
+		rename ".legit/.branches/$branchname",".legit/.branches/$nameafter";
+		print "Switched to branch '$branchname'\n";
+		#branch that gonna leave is master branch, store files for master, and takeout newfiles from folder if folder exists
+		if ( -e ".legit/.current_dir" ){ #storing directory already exist,copy it,match 2 folders
+			store_current("*",".legit/.current_dir");
+		}
+		else{ #direcoty not exist, make dir and match 2 folders
+			mkdir ".legit/.current_dir",0755;
+			store_current("*",".legit/.current_dir");
+		}
+		if ( -e ".legit/.branches/$nameafter/.current_dir" ){ #only when folder exists;
+			take_out_files(".legit/.branches/$nameafter/.current_dir","./");
+		}
+	}
+	elsif( $size == 1){
+		$current_bra = $current_branch[0];
+		$keep_cu = $current_bra;
+		$keep_cu =~ s/\*$//g;
+		@file_ = split ('/',$keep_cu);  # split the path to get the current branch name
+		$b_name = $file_[-1];
+		check_index("$b_name*");    
+		rename $current_bra, $keep_cu;	
+		rename ".legit/.branches/$branchname",".legit/.branches/$nameafter";
+		if ( -e "$current_bra/.current_dir"){
+			store_current("*","$current_bra/.current_dir");
+		}
+		else{
+			mkdir "$current_bra/.current_dir",0755;
+			store_current("*","$current_bra/.current_dur");
+		}
+		if ( -e ".legit/.branches/$nameafter/.current_dir" ){
+			take_out_files(".legit/.branches/$nameafter/.current_dir","./");
+		}
+		print "Switched to branch '$branchname'\n";
+	}else{
+		print "you are here now!\n";
+	} 
+}
+else{
+	if ($branchname eq "master" ){
+		check_index("master");
+		@current_branch =glob(".legit/.branches/*");
+	 	@current_branch = grep(/[\*]$/,@current_branch);
+       		my $size = @current_branch;
+		if ($size == 0){
+			print "You are on master now!\n";
+		}
+		else{
+			$current_bra = $current_branch[0];
+            		$keep_cu = $current_bra;
+            		$keep_cu =~ s/\*$//g;
+            		@file_ = split ('/',$keep_cu);  # split the path to get the current branch name
+            		$b_name = $file_[-1];
+            		check_index("$b_name*");    
+            		rename $current_bra, $keep_cu;
+	    		print "Switched to branch '$branchname'\n";
+			if ( -e "$keep_cu/.current_dir"){
+				store_current("*","$keep_cu/.current_dir");
+			}
+			else{
+				mkdir "$keep_cu/.current_dir",0755;
+				store_current("*","$keep_cu/.current_dir");
+			}
+			if ( -e ".legit/.current_dir"){
+				take_out_files(".legit/.current_dir","./");
+			}
+		}
+
+	}elsif ( -e ".legit/.branches/$branchname"."*"){
+		print "You are on branch $branchname now!\n";
+	}
+	else{
+		print "branch $branchname not exist!\n";
+	} 
+
+
+}
+
+
+
+#$branch_folder = ".".$branchname;
+#$branch_folder_after = $branch_folder."*";
+#if ( -e $branch_folder){ #branch exist, and this branch is not a current branch
+#	@current_branch =glob(".*");
+#	@current_branch = grep(/[\*]$/,@current_branch);
+#	my $size = @current_branch;
+#	check_index(@current_branch,$size);
+#	
+#	if ($size == 1){ #there is a branch with *, change name
+#		rename $branch_folder, $branch_folder_after; 
+#		my $pre_branch_name = $current_branch[0];
+#		$name = $pre_branch_name;
+#		$pre_branch_name =~ s/\*//g;
+#		rename $name, $pre_branch_name;
+#	}
+#	elsif ($size == 0 && -e ".legit" ){
+#		rename $branch_folder, $branch_folder_after; 	
+#	}else{
+#		print "Repository not initialized yet";
+#	}
+#	
+#		
+#} elsif ( -e $branch_folder_after ) {
+#	print "Don't need to check out! Current branch is $branchname\n";
+#}else {
+#	print "Branch $branchname not exist!\n";
+#}
+
+sub check_index{
+	my @cu = @_;
+	#print "will read dir ".$cu[0]."\n";	
+	if ( $cu[0] ne "master" ){
+		 $repo_dir = ".legit/.branches/$cu[0]/";
+		 $index_dir = $repo_dir."index/";
+    }
+	else{
+		$repo_dir = ".legit/";
+		$index_dir = $repo_dir."index/";
+	}
+		opendir DH, $repo_dir or die "can not open directory $repo_dir";
+		#opendir DJ, $index_dir or die "can not open directory $index_dir";
+		#my @legit_files = readdir DH;
+		foreach $file (readdir DH){
+			if ($file =~ /^[^\.]/ && $file ne "index" && $file ne ".log" && $file ne ".history"){
+				#print "THIS FILE IS $index_dir$file\n";
+					if ( -e "$index_dir$file" ) {
+						open IN, "<$index_dir$file" or die "cannot open index file $index_dir$file\n";
+						open RE, "<$repo_dir$file" or die "cannoe open repo file $index_dir$file\n";
+						#print "opend 2 files $index_dir$file and $repo_dir$file\n";
+						@index_file_content = <IN>;
+						@repo_file_content = <RE>;
+						#print "file $index_dir$file has $#index_file_content lines\n";
+						
+						#print "file $repo_dir$file has $#repo_file_content lines\n";
+						if ($#index_file_content != $#repo_file_content ){
+							print "Changies have not commit yet!\n";
+							exit 1;
+						}
+						else{
+							#print "lineis not same\n";	
+							for ($count=0; $count <=$#index_file_content; $count++){
+								if ($index_file_content[$count] eq $repo_file_content[$count]){
+									if ($count == $#index_file_content){
+										#	print "$index_dir$file and $repo_dir$file are the same\n";
+									}
+									next;
+								}else{
+									print "Changes have not commit yet!\n";
+									exit 1;
+								}
+							}
+						}
+					}
+					else {
+						print "Changes have noit commit yet11!\n";
+						exit 1;
+					}
+			}
+		}
+}

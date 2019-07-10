@@ -1,0 +1,20 @@
+#!/usr/bin/env dash
+
+#test if no arguments given
+if test $# -gt 0
+then
+	echo "usage: legit-init"
+	exit 1
+fi
+
+#if no .legit directory exist, create one, else raise error
+if [ ! -d ".legit" ]
+then
+	mkdir ".legit"
+	echo "Initialized empty legit repository in .legit"
+	cd ".legit" && mkdir "index" && touch ".log" && mkdir ".history" && mkdir ".branches"
+#create directory index(store files been add), log(record commit),.history(store files for different commit)
+else
+	echo "legit-init: error: .legit already exists"
+	exit 1
+fi

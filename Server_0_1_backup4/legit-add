@@ -1,0 +1,64 @@
+#!/usr/bin/env dash
+if [ -e ".legit" ]
+then
+	flag=`ls ".legit/.branches"|grep "\*$"`
+	if [ -d ".legit/.branches" -a ! "$flag" = ""  ]
+	then
+		for file in ".legit/.branches"/*
+		do
+			temp=`echo $file|grep '[\*]$'`
+			if [ ! "$temp" = "" ]
+			then
+				repo_dir=$temp
+			fi
+		done
+	else
+		repo_dir=".legit"
+	fi
+else
+	echo "legit-add: error: no .legit directory containing legit repository exists"
+	exit 1
+fi
+#echo "$repo_dir"
+for file in $@
+do
+#this mainly for detect if there is illegal word in filename		
+	first_letter=`echo "$file"|egrep -v '^[a-zA-Z0-9]'`
+	words_contain=`echo "$file"|sed 's/[a-zA-Z0-9]//g'|sed 's/[_\.-]//g' `
+
+	if [ "$first_letter" ]
+	then
+		echo 'illegal file name: first letter'
+		exit 1
+	fi
+
+
+	if [ "$words_contain" ]
+	then
+		echo 'illegal file name: illegal letter'
+		exit 1
+	fi
+
+#check if index directory already exist, if so, copy the file to the index directory
+	if [ -d "$repo_dir/index" ]
+	then	
+
+#check if this file exist in current directory
+		if [ -e "$file" ]
+		then
+			cp -f "$file"   $repo_dir/index/"$file"
+		else
+			if [ -e $repo_dir/index/$file ]
+			then
+				rm $repo_dir/index/$file
+			else
+				echo "legit-add: error: can not open '$file'"
+				exit 1
+			fi
+		fi
+	else
+		echo "legit-add: error: no .legit directory containing legit repository exists"
+		exit 1
+	
+fi
+done

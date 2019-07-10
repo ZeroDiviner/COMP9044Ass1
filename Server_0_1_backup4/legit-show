@@ -1,0 +1,62 @@
+#!/usr/bin/env dash
+
+
+if [ -e ".legit" ]
+then
+        flag=`ls ".legit/.branches"|grep "\*$"`
+        if [ -d ".legit/.branches" -a ! "$flag" = ""  ]
+        then
+                for file in ".legit/.branches"/*
+                do  
+                        temp=`echo $file|grep '[\*]$'`
+                        if [ ! "$temp" = "" ]
+                        then
+                                repo_dir=$temp
+                        fi  
+                done
+        else
+                repo_dir=".legit"
+        fi  
+else
+        echo "legit-add: error: no .legit directory containing legit repository exists"
+        exit 1
+fi
+
+
+
+
+
+
+commit=`echo "$@"|cut -d: -f1`
+name=`echo "$@"|cut -d: -f2`
+log_num=`cat $repo_dir/.log|tail -1|cut -d' ' -f1`
+
+#get filename and commit number and log number
+
+
+if [ "$commit"x != ""x ] #check if commit number is ''
+then	
+	
+	if [ "$commit" -gt "$log_num"  ] #when commit number greater that the log_num in log file
+	then
+		echo "legit-show: error: unknown commit '$commit'"
+		exit 1
+	fi
+
+	filename="$name*$commit"
+	if [ ! -e $repo_dir/.history/"$filename" ] #when file is not found in .history directory(for certain commit)
+	then
+		echo "legit-show: error: '$name' not found in commit $commit"
+		exit 1
+	else
+		cat $repo_dir/.history/"$filename"
+	fi
+else
+	if [ ! -e $repo_dir/index/"$name" ] #when file in current directory not exist
+	then
+		echo "legit-show: error: '$name' not found in index"
+		exit 1
+	else
+		cat $repo_dir/index/"$name"
+	fi
+fi
