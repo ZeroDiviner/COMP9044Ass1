@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+use File::Copy
+
 $size = @ARGV;
 if ($size != 1){
 	print "usage: legit-checkout [branchname]\n";	
@@ -92,8 +94,35 @@ else{
 
 
 }
+sub take_out_files{
+	my ($dir, $target)  = @_;
+	@files = glob "$dir/*";
+	@current_files = glob "*";
+	foreach $current_f (@current_files){
+		if ($current_f =~ /^legit/){
+			next;
+		}
+		unlink $current_f;
+		print "$current_f\n";
+	}
+	print "-----------------------\n";
+	foreach $file (@files){
+		#print "takeout file $file\n";
+		@names = split '/',$file;
+		$name = $names[-1];
+		copy ($file,"./$name");
+	}
+	print "will take out files from $dir\n";
+}
+sub store_current{
 
+	my ($dir, $target) = @_;
+	@files=grep(/^[^legit]/,glob $dir);
+	foreach $file (@files){
+		copy($file, "$target/$file");
+	}
 
+}
 
 #$branch_folder = ".".$branchname;
 #$branch_folder_after = $branch_folder."*";
